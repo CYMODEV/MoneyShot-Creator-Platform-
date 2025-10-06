@@ -1,0 +1,42 @@
+// src/editor/video/filters.ts
+import { FFmpegKit, ReturnCode } from "ffmpeg-kit-react-native";
+import * as FileSystem from "expo-file-system";
+import { Platform } from "react-native";
+
+type Preset = "none" | "silhouette" | "silentFilm" | "sepia" | "vintage";
+
+// Helper to make an output path
+async function outPath() {
+  const dir = FileSystem.cacheDirectory || FileSystem.documentDirectory!;
+  const name = `ms_${Date.now()}.mp4`;
+  return dir + name;
+}
+
+export async function applyVideoFilter(inputUri: string, preset: Preset): Promise<string> {
+  const out = await outPath();
+
+  // Map presets to FFmpeg filter chains
+  const chains: Record<Preset, string> = {
+    none: "copy",
+    sepia: "format=rgba,curves=preset=vintage,eq=brightness=0.02:saturation=0.8",
+    vintage: "format=rgba,curves=preset=vintage,vignette=PI/4:0.7",
+    silhouette: "format=gray,geq=r='if(lte(lum(X,Y),128),0,255)':g='if(lte(lum(X,Y),128),0,255)':b='if(lte(lum(X,Y),128),0,255)'",
+    silentFilm: "format=gray,fps=18,vignette=PI/3:0.8,noise=alls=20:allf=t"
+  };
+
+  const filter = chains[preset];
+  const cmd =
+    filter === "copy"
+      ? `-i "${inputUri}" -c copy "${out}"`
+      : `-i "${inputUri}" -vf "${filter}" -c:v libx264 -pix_fmt yuv420p -preset veryfast -crf 22 -c:a copy "${out}"`;
+
+  const session = await FFmpegKit.run(cmd);
+  const rc = await session.getReturnCode();
+
+  if (ReturnCode.isSuccess(rc)) {
+    return out;
+  } else {
+    const logs = await session.getLogsAsString();
+    throw new Error(`FFmpeg failed: ${logs?.slice(0, 300) || rc}`);
+  }
+}
