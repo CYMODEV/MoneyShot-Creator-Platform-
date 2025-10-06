@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "MoneyShot",
+    "slug": "moneyshot",
+    "version": "1.0.0",
+    "scheme": "moneyshot",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0B0F14"
+    },
+    "updates": { "fallbackToCacheTimeout": 0 },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "app.moneyshot.mobile"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#0B0F14"
+      },
+      "package": "app.moneyshot.mobile"
+    },
+    "web": { "bundler": "metro", "favicon": "./assets/icon.png" }
+  }
+}
