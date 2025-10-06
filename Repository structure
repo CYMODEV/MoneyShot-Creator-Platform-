@@ -1,0 +1,36 @@
+moneyshot-app/
+├─ app.json
+├─ app.config.ts
+├─ package.json
+├─ tsconfig.json
+├─ babel.config.js
+├─ .gitignore
+├─ README.md
+├─ assets/
+│  ├─ icon.png
+│  ├─ splash.png
+│  └─ placeholder.jpg
+├─ src/
+│  ├─ App.tsx
+│  ├─ navigation/
+│  │  └─ Tabs.tsx
+│  ├─ screens/
+│  │  ├─ Home.tsx
+│  │  ├─ Discover.tsx
+│  │  ├─ Upload.tsx
+│  │  ├─ Competitions.tsx
+│  │  └─ Profile.tsx
+│  ├─ components/
+│  │  ├─ WalletBar.tsx
+│  │  ├─ CompetitionCard.tsx
+│  │  ├─ SupportModal.tsx
+│  │  └─ MediaTile.tsx
+│  ├─ theme/
+│  │  └─ theme.ts
+│  ├─ store/
+│  │  └─ useStore.ts
+│  ├─ services/
+│  │  ├─ api.ts
+│  │  └─ mock.ts
+│  └─ utils/
+│     └─ format.ts
