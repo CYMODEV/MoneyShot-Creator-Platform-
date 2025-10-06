@@ -1,0 +1,117 @@
+// src/editor/EditorScreen.tsx
+import React, { useState } from "react";
+import { View, Text, TouchableOpacity, Image, StyleSheet, Platform } from "react-native";
+import * as ImagePicker from "expo-image-picker";
+import FilterPreview from "./FilterPreview";
+import { applyVideoFilter } from "./video/filters";
+
+type Mode = "photo" | "video";
+type Preset = "none" | "silhouette" | "silentFilm" | "sepia" | "vintage";
+
+export default function EditorScreen() {
+  const [mode, setMode] = useState<Mode>("photo");
+  const [uri, setUri] = useState<string | null>(null);
+  const [preset, setPreset] = useState<Preset>("none");
+  const [exporting, setExporting] = useState(false);
+
+  async function pickMedia() {
+    if (mode === "photo") {
+      const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 1 });
+      if (!res.canceled) setUri(res.assets[0].uri);
+    } else {
+      const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Videos });
+      if (!res.canceled) setUri(res.assets[0].uri);
+    }
+  }
+
+  async function exportMedia() {
+    if (!uri) return;
+    try {
+      setExporting(true);
+      if (mode === "video") {
+        const out = await applyVideoFilter(uri, preset);
+        setUri(out);
+      } else {
+        // For photos, FilterPreview renders the shader; capture via view snapshot if needed (advanced).
+        // In practice, save via GLView readPixels or use gl-react capture (outside scope of short demo).
+        alert("Photo preview shows filter. Implement capture if you need file export.");
+      }
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Creator Editor</Text>
+
+      <View style={styles.row}>
+        {(["photo", "video"] as const).map(m => (
+          <TouchableOpacity key={m} onPress={() => setMode(m)} style={[styles.tab, mode === m && styles.tabActive]}>
+            <Text style={[styles.tabText, mode === m && styles.tabTextActive]}>{m.toUpperCase()}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <View style={styles.rowScroll}>
+        {(["none", "silhouette", "silentFilm", "sepia", "vintage"] as const).map(p => (
+          <TouchableOpacity key={p} onPress={() => setPreset(p)} style={[styles.pill, preset === p && styles.pillActive]}>
+            <Text style={[styles.pillText, preset === p && styles.pillTextActive]}>{p}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <View style={styles.preview}>
+        {!uri ? (
+          <TouchableOpacity onPress={pickMedia} style={styles.pickBtn}>
+            <Text style={{ color: "#fff", fontWeight: "700" }}>Pick {mode}</Text>
+          </TouchableOpacity>
+        ) : mode === "photo" ? (
+          <FilterPreview uri={uri} preset={preset} />
+        ) : (
+          <View style={{ alignItems: "center" }}>
+            <Text style={{ color: "#9aa9bf", marginBottom: 8 }}>Selected video:</Text>
+            <Image source={{ uri }} style={{ width: 260, height: 146, borderRadius: 8, opacity: 0.5 }} />
+            <Text style={{ color: "#9aa9bf" }}>Preview filters via export</Text>
+          </View>
+        )}
+      </View>
+
+      <View style={styles.actions}>
+        <TouchableOpacity onPress={pickMedia} style={styles.actionBtn}>
+          <Text style={styles.actionText}>Choose</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={exportMedia} style={[styles.actionBtn, styles.primaryBtn]} disabled={!uri || exporting}>
+          <Text style={styles.actionText}>{exporting ? "Processing..." : "Apply & Save"}</Text>
+        </TouchableOpacity>
+      </View>
+
+      <Text style={styles.hint}>
+        Note: Video export uses FFmpeg filters. Photo filters render live via shaders; add capture if you need file output.
+      </Text>
+      {Platform.OS === "ios" && <Text style={styles.hint}>Tip: Use EAS build for ffmpeg on iOS.</Text>}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: "#0B0F14", padding: 16 },
+  title: { color: "#E6EDF7", fontSize: 20, fontWeight: "800", marginBottom: 12 },
+  row: { flexDirection: "row", gap: 8, marginBottom: 12 },
+  tab: { paddingVertical: 8, paddingHorizontal: 12, borderRadius: 10, backgroundColor: "#111823" },
+  tabActive: { backgroundColor: "#0F172A", borderWidth: 1, borderColor: "#1E2A44" },
+  tabText: { color: "#9aa9bf", fontWeight: "700" },
+  tabTextActive: { color: "#FFD166" },
+  rowScroll: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 12 },
+  pill: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, backgroundColor: "#111823" },
+  pillActive: { backgroundColor: "#FFD166" },
+  pillText: { color: "#9aa9bf", fontWeight: "700" },
+  pillTextActive: { color: "#111" },
+  preview: { flex: 1, borderRadius: 12, borderWidth: 1, borderColor: "#1E2A44", backgroundColor: "#0F172A", alignItems: "center", justifyContent: "center" },
+  pickBtn: { paddingHorizontal: 18, paddingVertical: 10, borderRadius: 10, backgroundColor: "#3B82F6" },
+  actions: { flexDirection: "row", gap: 12, marginTop: 12 },
+  actionBtn: { flex: 1, padding: 12, borderRadius: 10, backgroundColor: "#111823", alignItems: "center" },
+  primaryBtn: { backgroundColor: "#3B82F6" },
+  actionText: { color: "#fff", fontWeight: "800" },
+  hint: { color: "#9aa9bf", fontSize: 12, marginTop: 8 }
+});
