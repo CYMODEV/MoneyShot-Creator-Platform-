@@ -1,0 +1,88 @@
+// src/editor/filters/shaders.ts
+import { Shaders, Node, GLSL } from "gl-react";
+import React from "react";
+import { Surface } from "gl-react-expo";
+
+export const shaders = Shaders.create({
+  none: {
+    frag: GLSL`
+precision highp float;
+varying vec2 uv;
+uniform sampler2D img;
+void main() { gl_FragColor = texture2D(img, uv); }`
+  },
+  silhouette: {
+    // Threshold luminance; output black on white for strong silhouettes
+    frag: GLSL`
+precision highp float;
+varying vec2 uv;
+uniform sampler2D img;
+void main() {
+  vec4 c = texture2D(img, uv);
+  float luma = dot(c.rgb, vec3(0.2126, 0.7152, 0.0722));
+  float th = 0.5; // tweak threshold
+  float v = step(th, luma);
+  gl_FragColor = vec4(vec3(v), 1.0); // white for bright, black for dark
+}`
+  },
+  sepia: {
+    frag: GLSL`
+precision highp float;
+varying vec2 uv;
+uniform sampler2D img;
+void main(){
+  vec3 c = texture2D(img, uv).rgb;
+  vec3 sep = vec3(
+    dot(c, vec3(0.393, 0.769, 0.189)),
+    dot(c, vec3(0.349, 0.686, 0.168)),
+    dot(c, vec3(0.272, 0.534, 0.131))
+  );
+  gl_FragColor = vec4(sep, 1.0);
+}`
+  },
+  silentFilm: {
+    // Grayscale + vignette + grain for silent film look
+    frag: GLSL`
+precision highp float;
+varying vec2 uv;
+uniform sampler2D img;
+uniform float time;
+float rand(vec2 co){ return fract(sin(dot(co.xy, vec2(12.9898,78.233))) * 43758.5453); }
+void main(){
+  vec3 c = texture2D(img, uv).rgb;
+  float g = dot(c, vec3(0.299,0.587,0.114));
+  // vignette
+  float dist = distance(uv, vec2(0.5));
+  float vig = smoothstep(0.8, 0.3, dist);
+  // grain
+  float noise = rand(uv + fract(time)) * 0.15;
+  float film = clamp(g * vig + noise, 0.0, 1.0);
+  gl_FragColor = vec4(vec3(film), 1.0);
+}`
+  },
+  vintage: {
+    // Warm curve + low contrast
+    frag: GLSL`
+precision highp float;
+varying vec2 uv;
+uniform sampler2D img;
+void main(){
+  vec3 c = texture2D(img, uv).rgb;
+  c = pow(c, vec3(0.9)); // slight gamma
+  c += vec3(0.03, 0.0, -0.01); // warm tone
+  c = clamp(c * 0.95 + 0.03, 0.0, 1.0); // softer contrast
+  gl_FragColor = vec4(c, 1.0);
+}`
+  }
+});
+
+export function GLPhoto({ uri, preset }: { uri: string; preset: keyof typeof shaders }) {
+  const ShaderNode = ({ children }: any) => <Node shader={shaders[preset]} uniforms={{ img: children, time: Date.now() / 1000 }} />;
+  return (
+    <Surface style={{ width: 280, height: 280, borderRadius: 12 }}>
+      <ShaderNode>
+        {{ uri }}
+      </ShaderNode>
+    </Surface>
+  );
+}
