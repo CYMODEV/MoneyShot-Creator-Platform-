@@ -1,0 +1,13 @@
+// src/editor/FilterPreview.tsx
+import React from "react";
+import { View, Text } from "react-native";
+import { GLPhoto } from "./filters/shaders";
+
+export default function FilterPreview({ uri, preset }: { uri: string; preset: any }) {
+  return (
+    <View style={{ alignItems: "center" }}>
+      <GLPhoto uri={uri} preset={preset} />
+      <Text style={{ color: "#9aa9bf", marginTop: 8 }}>Preset: {preset}</Text>
+    </View>
+  );
+}
