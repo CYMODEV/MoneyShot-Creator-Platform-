@@ -180,7 +180,7 @@ To execute on this vision, MoneyShot seeks investment in the following strategic
 5. **White-Label and Partner API Ecosystem**: Build developer platform, enable white-label rapid adoption across sports, events, streaming, and fintech brands.
 
 **Funding Requirements:** $6M USD seed/Series A: ~$2M product/engineering, $1M reserve funding, $1M security/audit/regulatory, $1.2M marketing/brand, $800K developer/partner/channel enablement.
-
+investors    tradango.cb.id  
 ---
 
 ## ROI Potential
